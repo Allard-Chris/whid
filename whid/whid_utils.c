@@ -33,7 +33,7 @@ void createActivity(wchar_t* title, u8 type, struct activity** head_activity, st
     createEvent(STOPPED, &new_activity->events);
   }
 
-  if (*last_activity != NULL) {
+  if (last_activity != NULL) {
     *last_activity = new_activity;
   }
 

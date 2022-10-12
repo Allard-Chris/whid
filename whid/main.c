@@ -147,7 +147,6 @@ void menuCreateActivity(int type) {
         break;
 
       case MENU_START_ACTIVITY:
-
         if (type == TASK) {
           createActivity(title, type, &g_journey->activities, &g_last_activity);
           g_journey->last_activity = g_last_activity;
@@ -155,7 +154,6 @@ void menuCreateActivity(int type) {
           menuRunningActivity(g_journey->last_activity);
         } else {
           createActivity(title, type, &g_journey->activities, NULL);
-          g_journey->last_activity = NULL;
         }
 
         menu_choice = 9;
