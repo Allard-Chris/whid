@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,14 +33,16 @@ typedef unsigned long long u64;
 typedef struct event {
   u8            type;
   time_t        at;
+  wchar_t*      reason;
   struct event* next_event;
 } event;
 
 typedef struct activity {
   wchar_t*         title;
-  u8               type;
   time_t           started_at;
   event*           events;
+  u8               id;
+  bool             runnable;
   struct activity* next_activity;
 } activity;
 
@@ -53,15 +56,21 @@ typedef struct journey {
 
 // Functions part
 struct journey* createJourney(void);
-void            createActivity(wchar_t* title, u8 type, struct activity** head_activity, struct activity** last_activity);
-void            createEvent(u8 type, struct event** head_event);
+void            createActivity(wchar_t* title, bool runnable, u8 id, struct activity** head_activity, struct activity** last_activity);
+void            createEvent(u8 type, wchar_t* reason, struct event** head_event);
 wchar_t*        convertSecondsToTime(u32 total_seconds, wchar_t* buffer);
 u32             computeActivityDuration(struct event* head_event, time_t beginning);
 u32             computeJourneyDuration(struct activity* head_activities);
-i8              getUserChoice(void);
-wchar_t*        setTitle(wchar_t* pre_title);
-wchar_t*        strncpyTruncate(wchar_t* dest, size_t sz_dest, const wchar_t* src);
-void            printJourney(struct journey* journey);
+wchar_t*        ctimeToWstring(wchar_t* ws_buffer, time_t* start);
 void            exportToFile(FILE* xml_file, struct journey* journey);
 void            freeJourney(struct journey* journey);
+i8              getUserChoice(void);
+void            printActivity(struct activity* activity);
+void            printEvent(struct event* event);
+void            printJourney(struct journey* journey);
+void            removeActivity(u8 id, struct activity** head_activity);
+void            removeCR(wchar_t* ws_buffer);
+wchar_t*        setTitle(wchar_t* pre_title, bool mandatory);
+wchar_t*        strncpyTruncate(wchar_t* dest, size_t sz_dest, const wchar_t* src);
+void            waitUserInput(void);
 #endif  // _HEADER_WHID_UTILS_H
