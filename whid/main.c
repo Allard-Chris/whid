@@ -6,6 +6,7 @@ wchar_t*         g_title = NULL;
 wchar_t*         g_reason = NULL;
 int              g_current_state = STOPPED;
 struct activity* g_last_activity = NULL;
+u8               g_id = 0;
 FILE*            g_xml_file;
 
 // main function.
@@ -25,7 +26,6 @@ int main(int argc, const char** argv) {
   do {
     drawMenuHeader(L"Main menu");
     wprintf(L"1. Dawn of a new day.\n");
-    wprintf(L"2. Open a day.\n");
     wprintf(L"9. Exit.\n");
     menu_choice = getUserChoice();
 
@@ -34,16 +34,14 @@ int main(int argc, const char** argv) {
         menuDawnOfANewDay();
         break;
 
-      case MENU_OPEN_DAY:
-        break;
-
       case MENU_QUIT:
         // Create last activity when quitting.
         if (g_journey != NULL) {
           wchar_t* str_out;
           str_out = setTitle(L"Pointage sortie", false);
-          createActivity(str_out, false, g_journey->nb_task, &g_journey->activities, &g_last_activity);
+          createActivity(str_out, false, g_id, &g_journey->activities, &g_last_activity);
           g_journey->nb_task += 1;
+          g_id += 1;
           g_journey->last_activity = g_last_activity;
         }
         break;
@@ -78,7 +76,7 @@ void drawMenuHeader(wchar_t* menu_title) {
   // clang-format off
     wprintf(L"+------------------------------------------------------------------------------+\n");
     wprintf(L"| What Have I Done                                                             |\n");
-    wprintf(L"| Version: %1.2f                                                                |\n", VERSION);
+    wprintf(L"| Version: %hs                                                                |\n", VERSION);
     wprintf(L"| ---                                                                          |\n");
     if (g_journey != NULL) {
         wprintf(L"| %-76ls |\n", menu_title);
@@ -117,9 +115,10 @@ void menuCreateActivity() {
 
       case MENU_START_ACTIVITY:
         if (title) {
-          createActivity(title, true, g_journey->nb_task, &g_journey->activities, &g_last_activity);
+          createActivity(title, true, g_id, &g_journey->activities, &g_last_activity);
           g_journey->last_activity = g_last_activity;
           g_journey->nb_task += 1;
+          g_id += 1;
           menuRunningActivity(g_journey->last_activity);
           menu_choice = 9;
         } else {
@@ -162,8 +161,9 @@ void menuDawnOfANewDay(void) {
     g_journey = createJourney();
     wchar_t* str_in;
     str_in = setTitle(L"Pointage entrée", false);
-    createActivity(str_in, false, g_journey->nb_task, &g_journey->activities, &g_last_activity);
+    createActivity(str_in, false, g_id, &g_journey->activities, &g_last_activity);
     g_journey->nb_task += 1;
+    g_id += 1;
     g_journey->first_activity = g_last_activity;
   }
 
@@ -246,6 +246,7 @@ void menuEditActivity(struct activity* activity) {
 
       case MENU_REMOVE_ACTIVITY:
         removeActivity(activity->id, &g_journey->activities);
+        g_journey->nb_task -= 1;
         menu_choice = 9;
         break;
     }

@@ -18,7 +18,6 @@
 #define MAX_STRING_SIZE 255
 #define MAX_STRING_BUFFER_SIZE MAX_STRING_SIZE * sizeof(char)
 #define MAX_WSTRING_BUFFER_SIZE MAX_STRING_SIZE * sizeof(wchar_t)
-
 #define EVENT 0
 #define TASK 1
 #define STOPPED 0

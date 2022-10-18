@@ -182,7 +182,11 @@ void exportToFile(FILE* xml_file, struct journey* journey) {
         if (current_event->type == RESUME) {
           fwprintf(xml_file, L"\t\t\t\t\t<event type=\"RESUME\" reason=\"\">%ls</event>\n", ws_buffer);
         } else {
-          fwprintf(xml_file, L"\t\t\t\t\t<event type=\"STOPPED\" reason=\"%ls\">%ls</event>\n", current_event->reason, ws_buffer);
+          if (current_event->reason) {
+            fwprintf(xml_file, L"\t\t\t\t\t<event type=\"STOPPED\" reason=\"%ls\">%ls</event>\n", current_event->reason, ws_buffer);
+          } else {
+            fwprintf(xml_file, L"\t\t\t\t\t<event type=\"STOPPED\" reason=\"no reason\">%ls</event>\n", ws_buffer);
+          }
         }
         current_event = current_event->next_event;
       }

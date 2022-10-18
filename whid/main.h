@@ -10,7 +10,7 @@
 #include "whid_utils.h"
 
 #ifndef VERSION
-#define VERSION 0.2
+#define VERSION "1.0"
 #endif
 
 #ifdef WIN32
@@ -20,7 +20,6 @@
 #endif
 
 #define MENU_NEW_DAY 1
-#define MENU_OPEN_DAY 2
 #define MENU_CREATE_NEW_TASK 1
 #define MENU_RESUME_LAST_ACTIVITY 2
 #define MENU_RESUME_ACTIVITY 3
