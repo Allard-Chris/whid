@@ -281,7 +281,7 @@ void menuRunningActivity(struct activity* activity) {
     total_seconds = (u32)difftime(time(NULL), t_current_activity);
     wprintf(L"\r%ls", convertSecondsToTime(total_seconds, ws_buffer));
     fflush(stdout);  // permit to print on the same line.
-    Sleep(1000);
+    Sleep(500);
   }
 
   // create a new event when we stop.

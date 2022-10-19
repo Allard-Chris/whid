@@ -10,7 +10,7 @@
 #include "whid_utils.h"
 
 #ifndef VERSION
-#define VERSION "1.0"
+#define VERSION "1.0a"
 #endif
 
 #ifdef WIN32
