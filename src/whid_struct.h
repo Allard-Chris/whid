@@ -8,7 +8,7 @@
 #include <wchar.h>
 
 // Default variables type.
-typedef char          i8;
+typedef signed char   i8;
 typedef unsigned char u8;
 typedef unsigned int  u32;
 typedef signed int    i32;

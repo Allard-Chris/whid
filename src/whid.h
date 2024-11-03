@@ -4,14 +4,13 @@
 
 #include <locale.h>
 #include <signal.h>
-#include <unistd.h>
 #include "whid_utils.h"
 #include "whid_io.h"
 #include "whid_struct.h"
 
-#define VERSION L"1.1"
+#define VERSION L"1.2"
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(WIN32)
 #define CLEAN_SCREEN "cls"
 #define VERSION_EXTENDED VERSION L"_win32"
 #include <windows.h>
@@ -19,6 +18,7 @@
 #ifdef __linux__
 #define CLEAN_SCREEN "clear"
 #define VERSION_EXTENDED VERSION L"_linux"
+#include <unistd.h>
 #endif
 
 // Constants definition.
@@ -40,10 +40,8 @@
 
 // Functions part.
 void             BreakRunningActivity(int signal);
-bool             CreateFileAtDate(const wchar_t* p_filename);
 void             ExitProperly(int codeReturned);
 void             SilentKill(int signal);
-bool             ImportDejaVu(const wchar_t* p_filename);
 void             DrawMenuHeader(const wchar_t* p_menuTitle);
 void             MenuDawnOfANewDay(void);
 void             MenuCreateActivity(void);

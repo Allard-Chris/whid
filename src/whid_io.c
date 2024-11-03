@@ -18,12 +18,17 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
   FILE*            p_file = NULL;
   struct tm*       p_timeInfo;
 
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
+
   if (p_journey == NULL) {
     return;
   }
 
   // Create new json file.
-  p_timeInfo = localtime(&currentTime);
+  UniLocaltime(&p_timeInfo, &currentTime);
   UniSwprintf(buffer, MAX_STRING_SIZE, L"%02d%02d%02d_logs.json", p_timeInfo->tm_year + 1900, p_timeInfo->tm_mon + 1, p_timeInfo->tm_mday);
   if (p_filename == NULL) {
     UniFopen(&p_file, WcharToUtf8(buffer), "w");
@@ -41,13 +46,13 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
   // Print journey's information.
   p_cJSONJourney = cJSON_CreateObject();
 
-  p_timeInfo = localtime(&p_journey->checkIn);
-  wcsftime(buffer, sizeof(buffer), STRCTIME, p_timeInfo);
+  UniLocaltime(&p_timeInfo, &p_journey->checkIn);
+  wcsftime(buffer, MAX_STRING_SIZE, STRCTIME, p_timeInfo);
   cJSON_AddItemToObject(p_cJSONJourney, "check_in", cJSON_CreateString(WcharToUtf8(buffer)));
   cJSON_AddItemToObject(p_cJSONJourney, "check_in_timestamp", cJSON_CreateNumber((long)p_journey->checkIn));
 
-  p_timeInfo = localtime(&p_journey->checkOut);
-  wcsftime(buffer, sizeof(buffer), STRCTIME, p_timeInfo);
+  UniLocaltime(&p_timeInfo, &p_journey->checkOut);
+  wcsftime(buffer, MAX_STRING_SIZE, STRCTIME, p_timeInfo);
   cJSON_AddItemToObject(p_cJSONJourney, "check_out", cJSON_CreateString(WcharToUtf8(buffer)));
   cJSON_AddItemToObject(p_cJSONJourney, "check_out_timestamp", cJSON_CreateNumber((long)p_journey->checkOut));
 
@@ -76,8 +81,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
       p_cJSONActivity = cJSON_CreateObject();
       cJSON_AddItemToArray(p_cJSONActivities, p_cJSONActivity);
       cJSON_AddItemToObject(p_cJSONActivity, "name", cJSON_CreateString(WcharToUtf8(p_currentActivity->p_title)));
-      p_timeInfo = localtime(&p_currentActivity->startedAt);
-      wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+      UniLocaltime(&p_timeInfo, &p_currentActivity->startedAt);
+      wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
       cJSON_AddItemToObject(p_cJSONActivity, "started_at", cJSON_CreateString(WcharToUtf8(buffer)));
       cJSON_AddItemToObject(p_cJSONActivity, "timestamp", cJSON_CreateNumber((long)p_currentActivity->startedAt));
       ConvertSecondsToTime(ComputeActivityDuration(p_currentActivity->p_listEvents, p_currentActivity->startedAt), buffer);
@@ -93,8 +98,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
         cJSON_AddItemToArray(p_cJSONEvents, p_cJSONEvent);
         cJSON_AddItemToObject(p_cJSONEvent, "type", cJSON_CreateString((p_currentEvent->type == EVENT_TYPE_RESUME) ? "RESUME" : "STOPPED"));
         cJSON_AddItemToObject(p_cJSONEvent, "reason", cJSON_CreateString(WcharToUtf8(p_currentEvent->p_reason)));
-        p_timeInfo = localtime(&p_currentEvent->at);
-        wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+        UniLocaltime(&p_timeInfo, &p_currentEvent->at);
+        wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
         cJSON_AddItemToObject(p_cJSONEvent, "at", cJSON_CreateString(WcharToUtf8(buffer)));
         cJSON_AddItemToObject(p_cJSONEvent, "timestamp", cJSON_CreateNumber((long)p_currentEvent->at));
         p_currentEvent = p_currentEvent->p_nextEvent;
@@ -108,8 +113,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
     p_cJSONBreaks = cJSON_CreateObject();
     cJSON_AddItemToObject(p_cJSONJourney, "breaks", p_cJSONBreaks);
     cJSON_AddItemToObject(p_cJSONBreaks, "name", cJSON_CreateString(WcharToUtf8(p_journey->p_breakTime->p_title)));
-    p_timeInfo = localtime(&p_journey->p_breakTime->startedAt);
-    wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+    UniLocaltime(&p_timeInfo, &p_journey->p_breakTime->startedAt);
+    wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
     cJSON_AddItemToObject(p_cJSONBreaks, "started_at", cJSON_CreateString(WcharToUtf8(buffer)));
     cJSON_AddItemToObject(p_cJSONBreaks, "timestamp", cJSON_CreateNumber((long)p_journey->p_breakTime->startedAt));
     ConvertSecondsToTime(ComputeActivityDuration(p_journey->p_breakTime->p_listEvents, p_journey->p_breakTime->startedAt), buffer);
@@ -123,8 +128,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
       cJSON_AddItemToArray(p_cJSONEvents, p_cJSONEvent);
       cJSON_AddItemToObject(p_cJSONEvent, "type", cJSON_CreateString((p_currentEvent->type == EVENT_TYPE_RESUME) ? "RESUME" : "STOPPED"));
       cJSON_AddItemToObject(p_cJSONEvent, "reason", cJSON_CreateString(WcharToUtf8(p_currentEvent->p_reason)));
-      p_timeInfo = localtime(&p_currentEvent->at);
-      wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+      UniLocaltime(&p_timeInfo, &p_currentEvent->at);
+      wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
       cJSON_AddItemToObject(p_cJSONEvent, "at", cJSON_CreateString(WcharToUtf8(buffer)));
       cJSON_AddItemToObject(p_cJSONEvent, "timestamp", cJSON_CreateNumber((long)p_currentEvent->at));
       p_currentEvent = p_currentEvent->p_nextEvent;
@@ -147,6 +152,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
   free(p_jsonOutput);
   fclose(p_file);
 
+  free(p_timeInfo);
+
   return;
 }
 
@@ -156,7 +163,8 @@ struct Journey* ImportFromFile(const char* p_filename) {
   char*           buffer = NULL;
   const char*     p_err = NULL;
   FILE*           p_file = NULL;
-  long            length = 0;
+  long            fileSize = 0;
+  long            bufferSize = 0;
   size_t          read = 0;
 
   UniFopen(&p_file, p_filename, "r");
@@ -166,34 +174,34 @@ struct Journey* ImportFromFile(const char* p_filename) {
 
   // Get the file size
   fseek(p_file, 0, SEEK_END);
-  length = ftell(p_file);
+  fileSize = ftell(p_file);
+  bufferSize = fileSize + 1;
   fseek(p_file, 0, SEEK_SET);
 
-  buffer = (char*)malloc(length + 1);
-  read = fread(buffer, 1, length, p_file);
-  if (read > 0) {
-    buffer[length] = L'\0';  // Null-terminate the string
+  buffer = (char*)malloc(bufferSize);
+  if (buffer == NULL) {
+    return NULL;
+  } else {
+    read = fread(buffer, 1, bufferSize, p_file);
+    if (read > 0) {
+      buffer[bufferSize-1] = '\0';  // Null-terminate the string
+    }
   }
-
   fclose(p_file);
 
   p_cJSONJourney = cJSON_Parse(buffer);
-
   if (p_cJSONJourney == NULL) {
     p_err = cJSON_GetErrorPtr();
     if (p_err != NULL) {
-      wprintf(L"Error before: %s\n", p_err);
+      wprintf(L"Error before: %hs\n", (char*)p_err);
       WaitUserInput();
     }
-    cJSON_Delete(p_cJSONJourney);
-    free(buffer);
-    return NULL;
+  } else {
+    p_newJourney = ParseJourney(p_cJSONJourney);
   }
 
-  p_newJourney = ParseJourney(p_cJSONJourney);
   cJSON_Delete(p_cJSONJourney);
   free(buffer);
-
   return p_newJourney;
 }
 
@@ -224,7 +232,7 @@ struct Journey* ParseJourney(cJSON* p_cJSONJourney) {
   if ((!cJSON_IsNumber(p_cJSONCheckInTimestamp)) || (!cJSON_IsString(p_cJSONLocation)) || (p_cJSONLocation->valuestring == NULL)) {
     goto _error;
   } else {
-    p_newJourney->checkIn = p_cJSONCheckInTimestamp->valuedouble;
+    p_newJourney->checkIn = (time_t)p_cJSONCheckInTimestamp->valuedouble;
     cmpValue = strcmp(p_cJSONLocation->valuestring, "Office");
     if (cmpValue == 0) {
       p_newJourney->location = LOCATION_OFFICE;
@@ -245,7 +253,7 @@ struct Journey* ParseJourney(cJSON* p_cJSONJourney) {
       p_newTitle = malloc(MAX_STRING_BUFFER_SIZE);
       if (p_newTitle != NULL) {
         StrncpyTruncate(p_newTitle, MAX_STRING_SIZE, Utf8ToWchar(p_cJSONActivityName->valuestring));
-        p_newActivity = CreateActivity(p_newTitle, false, p_cJSONActivityStartedAtTimestamp->valuedouble, &p_newJourney->p_listActivities);
+        p_newActivity = CreateActivity(p_newTitle, false, (time_t)p_cJSONActivityStartedAtTimestamp->valuedouble, &p_newJourney->p_listActivities);
       } else {
         goto _error;
       }
@@ -269,7 +277,7 @@ struct Journey* ParseJourney(cJSON* p_cJSONJourney) {
         } else {
           eventType = EVENT_TYPE_RESUME;
         }
-        CreateEvent(eventType, p_newReason, p_cJSONEventAtTimestamp->valuedouble, &p_newActivity->p_listEvents);
+        CreateEvent(eventType, p_newReason, (time_t)p_cJSONEventAtTimestamp->valuedouble, &p_newActivity->p_listEvents);
       }
     }
   }
@@ -282,7 +290,7 @@ struct Journey* ParseJourney(cJSON* p_cJSONJourney) {
     goto _error;
   } else {
     p_newTitle = SetTitle(L"Take a break", false);
-    p_newBreakActivity = CreateActivity(p_newTitle, false, p_cJSONActivityStartedAtTimestamp->valuedouble, &p_newJourney->p_breakTime);
+    p_newBreakActivity = CreateActivity(p_newTitle, false, (time_t)p_cJSONActivityStartedAtTimestamp->valuedouble, &p_newJourney->p_breakTime);
   }
 
   // Import break's events part.
@@ -302,7 +310,7 @@ struct Journey* ParseJourney(cJSON* p_cJSONJourney) {
       } else {
         eventType = EVENT_TYPE_RESUME;
       }
-      CreateEvent(eventType, p_newReason, p_cJSONEventAtTimestamp->valuedouble, &p_newBreakActivity->p_listEvents);
+      CreateEvent(eventType, p_newReason, (time_t)p_cJSONEventAtTimestamp->valuedouble, &p_newBreakActivity->p_listEvents);
     }
   }
 
@@ -318,7 +326,7 @@ _error:
 i8 GetUserChoice(void) {
   wchar_t  buffer[MAX_STRING_SIZE];
   wchar_t* p_endptr;
-  u8       inputSuccess;
+  u8       inputSuccess = 0;
   u8       userChoice = 0;
 
   wprintf(L"\n");
@@ -364,7 +372,7 @@ wchar_t* SetTitle(wchar_t* p_title, bool mandatory) {
         return NULL;
       }
 #if defined(WIN32) || defined(_WIN32)
-      sz_buffer = wcsnlen(str_buffer, MAX_STRING_SIZE - 1);
+      szBuffer = wcsnlen(buffer, MAX_STRING_SIZE - 1);
 #endif
 #ifdef __linux__
       szBuffer = SafeCsnlen(buffer, MAX_STRING_SIZE - 1);
@@ -426,6 +434,11 @@ void PrintJourney(struct Journey* p_journey) {
   wchar_t    buffer[MAX_STRING_SIZE];
   struct tm* p_timeInfo;
 
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
+
   if ((p_journey == NULL) || (p_journey->p_listActivities == NULL)) {
     return;
   }
@@ -434,16 +447,16 @@ void PrintJourney(struct Journey* p_journey) {
 
   wprintf(L"Check-in: ");
   SET_TERMINAL_ATTRIBUTE(BOLD, L"", L"");
-  p_timeInfo = localtime(&p_journey->checkIn);
-  wcsftime(buffer, sizeof(buffer), STRCTIME, p_timeInfo);
+  UniLocaltime(&p_timeInfo, &p_journey->checkIn);
+  wcsftime(buffer, MAX_STRING_SIZE, STRCTIME, p_timeInfo);
   wprintf(L"%ls\n", buffer);
   RESET_TERMINAL_ATTRIBUTE();
 
   if (p_journey->checkOut != (time_t)-1) {
     wprintf(L"Check-out: ");
     SET_TERMINAL_ATTRIBUTE(BOLD, L"", L"");
-    p_timeInfo = localtime(&p_journey->checkOut);
-    wcsftime(buffer, sizeof(buffer), STRCTIME, p_timeInfo);
+    UniLocaltime(&p_timeInfo, &p_journey->checkOut);
+    wcsftime(buffer, MAX_STRING_SIZE, STRCTIME, p_timeInfo);
     wprintf(L"%ls\n", buffer);
     RESET_TERMINAL_ATTRIBUTE();
   }
@@ -491,6 +504,7 @@ void PrintJourney(struct Journey* p_journey) {
   }
 
   WaitUserInput();
+  free(p_timeInfo);
   return;
 };
 
@@ -498,6 +512,11 @@ void PrintActivity(struct Activity* p_activity, bool isBreakTime) {
   wchar_t       buffer[MAX_STRING_SIZE];
   struct Event* p_currentEvent = p_activity->p_listEvents;
   struct tm*    p_timeInfo;
+
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
 
   wprintf(L"\n");
   wprintf(L"\tTitle: ");
@@ -512,8 +531,8 @@ void PrintActivity(struct Activity* p_activity, bool isBreakTime) {
 
   wprintf(L"\tStarted at: ");
   SET_TERMINAL_ATTRIBUTE(BOLD, FG_WHITE, L"");
-  p_timeInfo = localtime(&p_activity->startedAt);
-  wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+  UniLocaltime(&p_timeInfo, &p_activity->startedAt);
+  wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
   wprintf(L"%ls\n", buffer);
   RESET_TERMINAL_ATTRIBUTE();
 
@@ -533,6 +552,7 @@ void PrintActivity(struct Activity* p_activity, bool isBreakTime) {
     }
   }
 
+  free(p_timeInfo);
   return;
 };
 
@@ -540,24 +560,31 @@ void PrintEvent(struct Event* p_event) {
   wchar_t    buffer[MAX_STRING_SIZE];
   struct tm* p_timeInfo;
 
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
+
   if (p_event == NULL) {
     return;
   }
 
   if (p_event->type == EVENT_TYPE_RESUME) {
-    p_timeInfo = localtime(&p_event->at);
-    wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+    UniLocaltime(&p_timeInfo, &p_event->at);
+    wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
     wprintf(L"\t\tType: RESUME, at %ls\n", buffer);
   } else {
     if (p_event->p_reason) {
-      p_timeInfo = localtime(&p_event->at);
-      wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+      UniLocaltime(&p_timeInfo, &p_event->at);
+      wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
       wprintf(L"\t\tType: STOPPED, at %ls, reason: %ls\n", buffer, p_event->p_reason);
     } else {
-      p_timeInfo = localtime(&p_event->at);
-      wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+      UniLocaltime(&p_timeInfo, &p_event->at);
+      wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
       wprintf(L"\t\tType: STOPPED, at %ls, no reason\n", buffer);
     }
   }
+
+  free(p_timeInfo);
   return;
 };
