@@ -45,7 +45,7 @@ int UniSwprintf(wchar_t* p_buffer, size_t count, const wchar_t* p_format, ...) {
   va_start(args, p_format);
 
 #if defined(WIN32) || defined(_WIN32)
-  result = vswprintf_s(p_buffer, MAX_STRING_SIZE, p_format);
+  result = vswprintf_s(p_buffer, MAX_STRING_SIZE, p_format, args);
 #endif
 #ifdef __linux__
   result = vswprintf(p_buffer, MAX_STRING_SIZE, p_format, args);
@@ -57,10 +57,10 @@ int UniSwprintf(wchar_t* p_buffer, size_t count, const wchar_t* p_format, ...) {
 
 void UniFopen(FILE** fp_file, const char* p_filename, const char* p_modes) {
 #if defined(WIN32) || defined(_WIN32)
-  fopen_s(*fp_file, p_filename, p_modes)
+  fopen_s(fp_file, p_filename, p_modes);
 #endif
 #ifdef __linux__
-      * fp_file = fopen(p_filename, p_modes);
+  *fp_file = fopen(p_filename, p_modes);
 #endif
   return;
 }
@@ -74,34 +74,34 @@ size_t SafeCsnlen(const wchar_t* p_str, size_t maxLength) {
 }
 
 #if defined(_WIN32) || defined(WIN32)
-char* WcharToUtf8(const wchar_t* wcstr) {
-  if (!wcstr) {
+char* WcharToUtf8(const wchar_t* p_wcstr) {
+  if (!p_wcstr) {
     return NULL;
   }
-  size_t src_length = wcslen(wcstr);
-  int    length = WideCharToMultiByte(CP_UTF8, 0, wcstr, src_length, 0, 0, NULL, NULL);
+  size_t src_length = wcslen(p_wcstr);
+  int    length = WideCharToMultiByte(CP_UTF8, 0, p_wcstr, (int)src_length, 0, 0, NULL, NULL);
   char*  output_buffer = (char*)malloc((length + 1) * sizeof(char));
   if (output_buffer) {
-    WideCharToMultiByte(CP_UTF8, 0, wcstr, src_length, output_buffer, length, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, p_wcstr, (int)src_length, output_buffer, length, NULL, NULL);
     output_buffer[length] = '\0';
   }
   return output_buffer;
 }
 
-wchar_t* Utf8ToWchar(const char* src) {
-  if (!src) {
+wchar_t* Utf8ToWchar(const char* p_src) {
+  if (!p_src) {
     return NULL;
   }
 
-  size_t   src_length = strlen(src);
-  int      length = MultiByteToWideChar(CP_UTF8, 0, src, src_length, 0, 0);
-  wchar_t* output_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
-  if (output_buffer) {
-    MultiByteToWideChar(CP_UTF8, 0, src, src_length, output_buffer, length);
-    output_buffer[length] = L'\0';
+  size_t   srcLength = strlen(p_src);
+  int      length = MultiByteToWideChar(CP_UTF8, 0, p_src, (int)srcLength, 0, 0);
+  wchar_t* p_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+  if (p_buffer) {
+    MultiByteToWideChar(CP_UTF8, 0, p_src, (int)srcLength, p_buffer, length);
+    p_buffer[length] = L'\0';
   }
 
-  return output_buffer;
+  return p_buffer;
 }
 #endif
 #ifdef __linux__
@@ -149,3 +149,12 @@ wchar_t* Utf8ToWchar(const char* p_src) {
   return p_buffer;
 }
 #endif
+
+void UniLocaltime(struct tm** fp_tmDest, const time_t* p_time) {
+#if defined(_WIN32) && defined(WIN32)
+  localtime_s(*fp_tmDest, p_time);
+#endif
+#if defined(__linux__)
+  *fp_tmDest = localtime(p_time);
+#endif
+}

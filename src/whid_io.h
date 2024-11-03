@@ -23,7 +23,7 @@
 #define BLINK L"\x1b[5m"
 #define STRIKE L"\x1b[9m"
 
-#define STRCTIME L"%A %d %B %Y (Semaine n°%V) - %T"
+#define STRCTIME L"%A %d %B %Y (Semaine %V) - %T"
 #define STRCTIME_SHORT L"%d/%m/%y - %T"
 
 // Macro for colored printing with attributes.
@@ -36,9 +36,9 @@ void             ExportToFile(const char* p_filename, struct Journey* p_journey)
 struct Journey*  ParseJourney(cJSON* p_cJSONJourney);
 
 // Functions for U/I stuff.
-i8       GetUserChoice(void);
 wchar_t* SetTitle(wchar_t* p_title, bool mandatory);
 wchar_t* AskUserFilename();
+i8       GetUserChoice(void);
 void     WaitUserInput(void);
 void     PrintJourney(struct Journey* p_journey);
 void     PrintActivity(struct Activity* p_activity, bool isBreakTime);

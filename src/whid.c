@@ -39,10 +39,8 @@ int main(int argc, const char** argv) {
   gp_journey = NULL;
   gp_title = NULL;
   gp_reason = NULL;
-  gp_silentKill = NULL;
+  gp_silentKill = false;
   gp_filename = NULL;
-
-  setlocale(LC_ALL, "");
 
 #if defined(_WIN32) || defined(WIN32)
   // set console ouput format. Handle accent.
@@ -61,7 +59,7 @@ int main(int argc, const char** argv) {
     ExitProperly(-1);
   }
 #endif
-
+  setlocale(LC_ALL, "");
   // Check if we want to reopen a journey through an argument.
   if (argc > 1) {
     gp_filename = Utf8ToWchar(argv[1]);
@@ -117,6 +115,7 @@ void ExitProperly(int codeReturned) {
   }
 
   ExportToFile(WcharToUtf8(gp_filename), gp_journey);
+  WaitUserInput();
   FreeJourney(gp_journey);
   exit(codeReturned);
 }
@@ -126,8 +125,13 @@ void DrawMenuHeader(const wchar_t* p_menuTitle) {
   wchar_t    buffer[MAX_STRING_SIZE];
   struct tm* p_timeInfo;
 
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
+
   if (cr != 0) {
-    wprintf(L"Cannot execute: %s\n", CLEAN_SCREEN);
+    wprintf(L"Cannot execute: %hs\n", (char*)CLEAN_SCREEN);
   }
 
   // clang-format off
@@ -145,8 +149,9 @@ void DrawMenuHeader(const wchar_t* p_menuTitle) {
   if (gp_journey != NULL) {
      wprintf(L"Started at: ");
      SET_TERMINAL_ATTRIBUTE(BOLD, L"", L"");
-     p_timeInfo = localtime(&gp_journey->checkIn);
-     wcsftime(buffer, sizeof(buffer), STRCTIME, p_timeInfo);
+     //localtime_s(&p_timeInfo, &gp_journey->checkIn);
+     UniLocaltime(&p_timeInfo, &gp_journey->checkIn);
+     wcsftime(buffer, MAX_STRING_SIZE, STRCTIME, p_timeInfo);
      wprintf(L"%ls", buffer);
      RESET_TERMINAL_ATTRIBUTE();
      wprintf(L"\n");
@@ -207,6 +212,8 @@ void DrawMenuHeader(const wchar_t* p_menuTitle) {
   }
    wprintf(L"+------------------------------------------------------------------------------+\n");
   // clang-format on
+
+  free(p_timeInfo);
   return;
 }
 
@@ -220,89 +227,92 @@ void MenuDawnOfANewDay(void) {
 
     if (gp_journey == NULL) {
       ExitProperly(-1);
+    } else {
+      gp_journey->checkIn = time(NULL);
     }
-    gp_journey->checkIn = time(NULL);
   }
 
-  do {
-    DrawMenuHeader(L"MENU - DAWN OF A NEW DAY");
-    wprintf(L"1. NEW ACTIVITY.\n");
+  if (gp_journey != NULL) {
+    do {
+      DrawMenuHeader(L"MENU - DAWN OF A NEW DAY");
+      wprintf(L"1. NEW ACTIVITY.\n");
 
-    if (gp_journey->p_lastActivity != NULL) {
-      wprintf(L"2. RESUME LAST ACTIVITY: ");
-      SET_TERMINAL_ATTRIBUTE(BOLD, FG_WHITE, L"");
-      wprintf(L"\"%ls\"\n", gp_journey->p_lastActivity->p_title);
-      RESET_TERMINAL_ATTRIBUTE();
-    } else {
-      SET_TERMINAL_ATTRIBUTE(STRIKE, L"", L"");
-      wprintf(L"2. RESUME LAST ACTIVITY\n");
-      RESET_TERMINAL_ATTRIBUTE();
-    }
-    wprintf(L"3. RESUME ACTIVITY.\n");
-    wprintf(L"4. TAKE A BREAK.\n");
-    wprintf(L"5. EDIT ACTIVITY.\n");
-    wprintf(L"6. SHOW JOURNEY SUMMARY.\n");
-    wprintf(L"7. SET LOCATION.\n");
-    wprintf(L"9. GO BACK.\n");
+      if (gp_journey->p_lastActivity != NULL) {
+        wprintf(L"2. RESUME LAST ACTIVITY: ");
+        SET_TERMINAL_ATTRIBUTE(BOLD, FG_WHITE, L"");
+        wprintf(L"\"%ls\"\n", gp_journey->p_lastActivity->p_title);
+        RESET_TERMINAL_ATTRIBUTE();
+      } else {
+        SET_TERMINAL_ATTRIBUTE(STRIKE, L"", L"");
+        wprintf(L"2. RESUME LAST ACTIVITY\n");
+        RESET_TERMINAL_ATTRIBUTE();
+      }
+      wprintf(L"3. RESUME ACTIVITY.\n");
+      wprintf(L"4. TAKE A BREAK.\n");
+      wprintf(L"5. EDIT ACTIVITY.\n");
+      wprintf(L"6. SHOW JOURNEY SUMMARY.\n");
+      wprintf(L"7. SET LOCATION.\n");
+      wprintf(L"9. GO BACK.\n");
 
-    menuChoice = GetUserChoice();
-    switch (menuChoice) {
-      case MENU_NEW_ACTIVITY:
-        MenuCreateActivity();
-        break;
+      menuChoice = GetUserChoice();
+      switch (menuChoice) {
+        case MENU_NEW_ACTIVITY:
+          MenuCreateActivity();
+          break;
 
-      case MENU_TAKE_BREAK:
-        if (gp_journey->p_breakTime == NULL) {
-          p_breakTitle = SetTitle(L"Take a break", false);
-          if (p_breakTitle == NULL) {
-            ExitProperly(-1);
+        case MENU_TAKE_BREAK:
+          if (gp_journey->p_breakTime == NULL) {
+            p_breakTitle = SetTitle(L"Take a break", false);
+            if (p_breakTitle == NULL) {
+              ExitProperly(-1);
+            }
+            p_activity = CreateActivity(p_breakTitle, true, 0, NULL);
+            gp_journey->p_breakTime = p_activity;
+          } else {
+            p_activity = gp_journey->p_breakTime;
+            CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &gp_journey->p_breakTime->p_listEvents);
           }
-          p_activity = CreateActivity(p_breakTitle, true, 0, NULL);
-          gp_journey->p_breakTime = p_activity;
-        } else {
-          p_activity = gp_journey->p_breakTime;
-          CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &gp_journey->p_breakTime->p_listEvents);
-        }
-        MenuRunningActivity(p_activity);
+          MenuRunningActivity(p_activity);
 
-        break;
+          break;
 
-      case MENU_RESUME_LAST_ACTIVITY:
-        if (gp_journey->p_lastActivity != NULL) {
-          CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &gp_journey->p_lastActivity->p_listEvents);
-          MenuRunningActivity(gp_journey->p_lastActivity);
-        }
-        break;
-
-      case MENU_RESUME_ACTIVITY:
-        if (gp_journey->p_listActivities != NULL) {
-          p_activity = MenuChooseActivity();
-          if (p_activity != NULL) {
-            gp_journey->p_lastActivity = p_activity;
-            CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &p_activity->p_listEvents);
-            MenuRunningActivity(p_activity);
+        case MENU_RESUME_LAST_ACTIVITY:
+          if (gp_journey->p_lastActivity != NULL) {
+            CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &gp_journey->p_lastActivity->p_listEvents);
+            MenuRunningActivity(gp_journey->p_lastActivity);
           }
-        }
-        break;
+          break;
 
-      case MENU_EDIT_ACTIVITY:
-        if (gp_journey->p_listActivities != NULL) {
-          p_activity = MenuChooseActivity();
-          if (p_activity != NULL) {
-            MenuEditActivity(p_activity);
+        case MENU_RESUME_ACTIVITY:
+          if (gp_journey->p_listActivities != NULL) {
+            p_activity = MenuChooseActivity();
+            if (p_activity != NULL) {
+              gp_journey->p_lastActivity = p_activity;
+              CreateEvent(EVENT_TYPE_RESUME, NULL, 0, &p_activity->p_listEvents);
+              MenuRunningActivity(p_activity);
+            }
           }
-        }
-        break;
+          break;
 
-      case MENU_SHOW_JOURNEY_SUMMARY:
-        PrintJourney(gp_journey);
-        break;
+        case MENU_EDIT_ACTIVITY:
+          if (gp_journey->p_listActivities != NULL) {
+            p_activity = MenuChooseActivity();
+            if (p_activity != NULL) {
+              MenuEditActivity(p_activity);
+            }
+          }
+          break;
 
-      case MENU_SET_LOCATION:
-        MenuChangeLocation();
-        break;
-    }
-  } while (menuChoice != 9);
+        case MENU_SHOW_JOURNEY_SUMMARY:
+          PrintJourney(gp_journey);
+          break;
+
+        case MENU_SET_LOCATION:
+          MenuChangeLocation();
+          break;
+      }
+    } while (menuChoice != 9);
+  }
   return;
 }
 
@@ -435,6 +445,11 @@ void MenuRunningActivity(struct Activity* p_activity) {
   wchar_t    buffer[MAX_STRING_SIZE];
   struct tm* p_timeInfo;
 
+  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
+  if (p_timeInfo == NULL) {
+    return;
+  }
+
   if (p_activity->id == BREAK_TIME_ID) {
     gp_journey->currentStatus = STATE_BREAK;
   } else {
@@ -448,8 +463,8 @@ void MenuRunningActivity(struct Activity* p_activity) {
   RESET_TERMINAL_ATTRIBUTE();
   wprintf(L"Started at: ");
   SET_TERMINAL_ATTRIBUTE(BOLD, FG_WHITE, L"");
-  p_timeInfo = localtime(&p_activity->startedAt);
-  wcsftime(buffer, sizeof(buffer), STRCTIME_SHORT, p_timeInfo);
+  UniLocaltime(&p_timeInfo, &p_activity->startedAt);
+  wcsftime(buffer, MAX_STRING_SIZE, STRCTIME_SHORT, p_timeInfo);
   wprintf(L"%ls\n", buffer);
   RESET_TERMINAL_ATTRIBUTE();
 
@@ -493,6 +508,8 @@ void MenuRunningActivity(struct Activity* p_activity) {
 
   // update total_duration for the journey.
   gp_journey->duration = ComputeJourneyDuration(gp_journey->p_listActivities);
+
+  free(p_timeInfo);
 }
 
 void MenuChangeLocation(void) {
