@@ -16,12 +16,8 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
   size_t           length = 0;
   time_t           currentTime = time(NULL);
   FILE*            p_file = NULL;
-  struct tm*       p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm        timeInfo;
+  struct tm*       p_timeInfo = &timeInfo;
 
   if (p_journey == NULL) {
     return;
@@ -152,8 +148,6 @@ void ExportToFile(const char* p_filename, struct Journey* p_journey) {
   free(p_jsonOutput);
   fclose(p_file);
 
-  free(p_timeInfo);
-
   return;
 }
 
@@ -184,7 +178,7 @@ struct Journey* ImportFromFile(const char* p_filename) {
   } else {
     read = fread(buffer, 1, bufferSize, p_file);
     if (read > 0) {
-      buffer[bufferSize-1] = '\0';  // Null-terminate the string
+      buffer[bufferSize - 1] = '\0';  // Null-terminate the string
     }
   }
   fclose(p_file);
@@ -432,12 +426,8 @@ void WaitUserInput(void) {
 
 void PrintJourney(struct Journey* p_journey) {
   wchar_t    buffer[MAX_STRING_SIZE];
-  struct tm* p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm  timeInfo;
+  struct tm* p_timeInfo = &timeInfo;
 
   if ((p_journey == NULL) || (p_journey->p_listActivities == NULL)) {
     return;
@@ -504,19 +494,14 @@ void PrintJourney(struct Journey* p_journey) {
   }
 
   WaitUserInput();
-  free(p_timeInfo);
   return;
 };
 
 void PrintActivity(struct Activity* p_activity, bool isBreakTime) {
   wchar_t       buffer[MAX_STRING_SIZE];
   struct Event* p_currentEvent = p_activity->p_listEvents;
-  struct tm*    p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm     timeInfo;
+  struct tm*    p_timeInfo = &timeInfo;
 
   wprintf(L"\n");
   wprintf(L"\tTitle: ");
@@ -552,18 +537,13 @@ void PrintActivity(struct Activity* p_activity, bool isBreakTime) {
     }
   }
 
-  free(p_timeInfo);
   return;
 };
 
 void PrintEvent(struct Event* p_event) {
   wchar_t    buffer[MAX_STRING_SIZE];
-  struct tm* p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm  timeInfo;
+  struct tm* p_timeInfo = &timeInfo;
 
   if (p_event == NULL) {
     return;
@@ -585,6 +565,5 @@ void PrintEvent(struct Event* p_event) {
     }
   }
 
-  free(p_timeInfo);
   return;
 };

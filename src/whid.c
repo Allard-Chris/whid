@@ -115,7 +115,6 @@ void ExitProperly(int codeReturned) {
   }
 
   ExportToFile(WcharToUtf8(gp_filename), gp_journey);
-  WaitUserInput();
   FreeJourney(gp_journey);
   exit(codeReturned);
 }
@@ -123,12 +122,8 @@ void ExitProperly(int codeReturned) {
 void DrawMenuHeader(const wchar_t* p_menuTitle) {
   u8         cr = system(CLEAN_SCREEN);
   wchar_t    buffer[MAX_STRING_SIZE];
-  struct tm* p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm  timeInfo;
+  struct tm* p_timeInfo = &timeInfo;
 
   if (cr != 0) {
     wprintf(L"Cannot execute: %hs\n", (char*)CLEAN_SCREEN);
@@ -212,8 +207,6 @@ void DrawMenuHeader(const wchar_t* p_menuTitle) {
   }
    wprintf(L"+------------------------------------------------------------------------------+\n");
   // clang-format on
-
-  free(p_timeInfo);
   return;
 }
 
@@ -443,12 +436,8 @@ void MenuRunningActivity(struct Activity* p_activity) {
   u32        totalSeconds = 0;
   u32        oldDuration = ComputeActivityDuration(p_activity->p_listEvents, p_activity->startedAt);
   wchar_t    buffer[MAX_STRING_SIZE];
-  struct tm* p_timeInfo;
-
-  p_timeInfo = (struct tm*)malloc(sizeof(struct tm));
-  if (p_timeInfo == NULL) {
-    return;
-  }
+  struct tm  timeInfo;
+  struct tm* p_timeInfo = &timeInfo;
 
   if (p_activity->id == BREAK_TIME_ID) {
     gp_journey->currentStatus = STATE_BREAK;
@@ -508,8 +497,6 @@ void MenuRunningActivity(struct Activity* p_activity) {
 
   // update total_duration for the journey.
   gp_journey->duration = ComputeJourneyDuration(gp_journey->p_listActivities);
-
-  free(p_timeInfo);
 }
 
 void MenuChangeLocation(void) {
