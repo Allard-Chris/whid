@@ -3,4 +3,5 @@ What Have I Done
 
 # Description
 
-Just a simple program to enter my daily activity.
+Petit programme fait pour saisir mon activité dans une journée de taff.
+(Branche gtk: faite par IA).
