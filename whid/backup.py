@@ -2,7 +2,7 @@
 
   start                         -> restore .cache/whid-<today>.json
   any change, every minute      -> save (survives SIGKILL, power loss)
-  quit, SIGTERM, SIGINT, SIGHUP -> save
+  quit, SIGTERM, SIGINT, SIGHUP -> save + export/whid-<today>.json
 """
 
 import signal
@@ -24,7 +24,7 @@ class Backup:
 
         tracker.listen(self._write)
         GLib.timeout_add_seconds(AUTOSAVE_SECONDS, self._tick)
-        app.connect("shutdown", lambda _app: self.save())
+        app.connect("shutdown", self._shutdown)
 
         # Signals end the app cleanly, so "shutdown" saves.
         for sig in QUIT_SIGNALS:
@@ -60,6 +60,18 @@ class Backup:
     def _tick(self) -> bool:
         self.save()
         return GLib.SOURCE_CONTINUE
+
+    def _shutdown(self, _app: Gio.Application) -> None:
+        # Leaving the app exports the day as is, like a manual export.
+        self.save()
+        if not self.tracker.tasks:
+            return
+
+        path = str(Path(self.tracker.export_dir()) / self.tracker.filename())
+        try:
+            self.tracker.export(path)
+        except OSError as e:
+            print(f"whid: export failed: {e}", file=sys.stderr)
 
     def _quit(self, app: Gio.Application) -> bool:
         app.quit()
