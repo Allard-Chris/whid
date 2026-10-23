@@ -105,12 +105,14 @@ class QuickAdd(Adw.Window):
 
 
 class Window(Adw.ApplicationWindow):
-    def __init__(self, app: Adw.Application, tracker: Tracker) -> None:
+    def __init__(self, app: Adw.Application, tracker: Tracker,
+                 on_history) -> None:
         # Closing only hides: the app lives on in the tray.
         super().__init__(application=app, title="Whid",
                          default_width=WIDTH, default_height=HEIGHT,
                          hide_on_close=True)
         self.tracker = tracker
+        self.on_history = on_history
         self.rows = []  # (task, time label, toggle button)
         tracker.listen(self._rebuild)
 
@@ -133,8 +135,13 @@ class Window(Adw.ApplicationWindow):
                           tooltip_text="Exporter")
         save.connect("clicked", self._ask_save)
 
+        history = Gtk.Button(icon_name="x-office-calendar-symbolic",
+                             tooltip_text="Rapports")
+        history.connect("clicked", lambda _button: self.on_history())
+
         bar = Adw.HeaderBar()
         bar.pack_start(load)
+        bar.pack_start(history)
         bar.pack_end(save)
         return bar
 

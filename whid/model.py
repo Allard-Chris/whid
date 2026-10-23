@@ -7,6 +7,10 @@ from enum import Enum
 
 SECONDS_PER_HOUR = 3600
 SECONDS_PER_MINUTE = 60
+DAYS = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
+        "dimanche")
+MONTHS = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+          "août", "septembre", "octobre", "novembre", "décembre")
 
 
 class State(Enum):
@@ -81,3 +85,8 @@ def parse(text: str) -> int:
     # "01:02:05" -> 3725
     hours, minutes, seconds = (int(part) for part in text.split(":"))
     return hours * SECONDS_PER_HOUR + minutes * SECONDS_PER_MINUTE + seconds
+
+
+def decimal(seconds: float) -> str:
+    # 5400 -> "1,50": decimal hours, as timesheets usually expect.
+    return f"{seconds / SECONDS_PER_HOUR:.2f}".replace(".", ",")

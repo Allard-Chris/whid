@@ -5,13 +5,12 @@ import shutil
 from datetime import date, datetime
 from pathlib import Path
 
-from .model import Event, Kind, Task, fmt, parse
+from .model import DAYS, Event, Kind, Task, fmt, parse
 
 VERSION = 2
 INDENT = 2
 TIMESPEC = "seconds"  # "2026-10-22T10:37:12"
-DAYS = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-        "dimanche")
+REPORT_GLOB = "*.json"
 TMP_SUFFIX = ".tmp"
 
 # Everything stays in the application folder:
@@ -60,12 +59,35 @@ def save(path: str, tasks: list[Task]) -> None:
 
 
 def load(path: str) -> list[Task]:
+    return read(path)[1]
+
+
+def read(path: str) -> tuple[date, list[Task]]:
+    # Day of the report and its tasks.
     try:
         with open(path, encoding="utf-8") as f:
             doc = json.load(f)
-        return [_task(e) for e in doc["tasks"]]
+        return date.fromisoformat(doc["date"]), [_task(e) for e in doc["tasks"]]
     except (OSError, ValueError, KeyError, TypeError) as e:
         raise ValueError(f"invalid file: {path}") from e
+
+
+def reports() -> dict[date, str]:
+    # Day -> report file, among autosaves and exports. When several files
+    # cover the same day, the most recently written wins.
+    files = [path for folder in (CACHE_DIR, EXPORT_DIR) if folder.is_dir()
+             for path in folder.glob(REPORT_GLOB)]
+
+    found = {}
+    for path in sorted(files, key=lambda p: p.stat().st_mtime):
+        try:
+            day, _tasks = read(str(path))
+        except ValueError:
+            continue  # Not a whid report.
+
+        found[day] = str(path)
+
+    return found
 
 
 def _stamp(moment: datetime | None) -> str | None:

@@ -3,6 +3,8 @@
 import sys
 
 from .backup import Backup
+from .history import History
+from .reports import Reports
 from .tracker import Tracker
 from .tray import Tray
 from .window import Adw, QuickAdd, Window
@@ -13,7 +15,8 @@ APP_ID = "io.github.whid.Whid"
 def _startup(app: Adw.Application) -> None:
     # One tracker shared by the window and the tray.
     tracker = Tracker()
-    app.window = Window(app, tracker)
+    app.history = History(app, Reports())
+    app.window = Window(app, tracker, on_history=app.history.show)
     app.quick = QuickAdd(app, tracker)
     app.tray = Tray(tracker, APP_ID,
                     on_add=app.quick.show,
